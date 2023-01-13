@@ -7,4 +7,55 @@
     - "{{ ansible_distribution }}.yml"
   tags:
     - vars
+    - always
+
+- name: Importing Gitlab RPM gpg key
+  copy:
+    src: RPM-GPG-KEY-Gitlab
+    dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-Gitlab
+
+- name: Distributing .repo file 
+  template:
+    src: gitlab-runner.repo.j2
+    dest: /etc/yum.repos.d/gitlab-runner.repo
+  tags:
+    - repo
+
+- name: Installing latest gitlab runner pkg
+  yum:
+    name: gitlab-runner
+    state: latest
+
+- name: Templatize systemd unit file
+  template:
+    src: gitlab-runner.service.j2
+    dest: /etc/systemd/system/gitlab-runner.service
+  register: systemd_unit
+  notify: restart_gitlab_runner
+
+- name: Reloading systemd if needed
+  command: systemctl daemon-reload
+  when: systemd_unit is changed
+
+- name: Registering gitlab runner if needed
+  command:
+    cmd: "gitlab-runner register
+          --non-interactive
+          --name {{ inventory_hostname }}
+          --url {{ gitlab_runner_upstream_url }} 
+          --registration-token {{ gitlab_runner_registration_token }}
+          --executor shell
+          --shell bash
+          "
+    creates: /etc/gitlab-runner/registered
+  register: gitlab_registered
+
+- name: Declaring runner as registered
+  file:
+    path: /etc/gitlab-runner/registered
+    state: touch
+  when:
+    - gitlab_registered is defined
+    - gitlab_registered is changed
+
 

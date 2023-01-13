@@ -1,1 +1,13 @@
 # Defaults variables for role gitlab-runner
+# This role will install gitlab runner rpm from gitlab repo
+# and then registers it to the gitlab infra
+
+# Some setting to register the node
+# token to be found at the gitlab side for the project/namespace
+# Defaulting to upstream/real gitlab.com but we can have self-hosted one
+gitlab_runner_registration_token:
+gitlab_runner_upstream_url: https://gitlab.com
+
+# User under which jobs will ran (default to "gitlab-runner")
+gitlab_runner_user: gitlab-runner
+gitlab_runner_working_dir: "/home/{{ gitlab_runner_user }}"

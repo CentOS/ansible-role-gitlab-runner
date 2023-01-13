@@ -1,1 +1,6 @@
 # Defaults handlers for role gitlab-runner
+
+- name: restart_gitlab_runner
+  service:
+    name: gitlab-runner
+    state: restarted

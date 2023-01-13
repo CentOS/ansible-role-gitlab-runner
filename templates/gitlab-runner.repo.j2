@@ -1,0 +1,21 @@
+# coming from upstream gitlab installer and declared here
+
+[runner_gitlab-runner]
+name=runner_gitlab-runner
+baseurl=https://packages.gitlab.com/runner/gitlab-runner/el/$releasever/$basearch
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Gitlab
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+
+[runner_gitlab-runner-source]
+name=runner_gitlab-runner-source
+baseurl=https://packages.gitlab.com/runner/gitlab-runner/el/$releasever/SRPMS
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Gitlab
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+
+

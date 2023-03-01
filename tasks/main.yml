@@ -61,6 +61,28 @@
   tags:
     - always
 
+- block:
+    - name: Ensuring gitlab runner user had subuid/subgids
+      lineinfile:
+        path: "{{ item }}"
+        regexp: "^{{ gitlab_runner_user }}"
+        line: "{{ gitlab_runner_user }}:10000:65536"
+      with_items:
+        - /etc/subuid
+        - /etc/subgid
+      register: podman_subuid
+
+    - name: Running podman system migrate if needed
+      command: 
+        cmd: "podman system migrate"
+      become_user: "{{ gitlab_runner_user }}"
+      when: podman_subuid is changed
+  when:
+    - gitlab_runner_podman_host
+    - uid.stdout|int < 1000
+  tags:
+    - rootless
+
 - name: Registering podman runners if needed
   shell:
     cmd: "gitlab-runner register

@@ -2,12 +2,37 @@
 # This role will install gitlab runner rpm from gitlab repo
 # and then registers it to the gitlab infra
 
-# Some setting to register the node
-# token to be found at the gitlab side for the project/namespace
-# Defaulting to upstream/real gitlab.com but we can have self-hosted one
-gitlab_runner_registration_token:
-gitlab_runner_upstream_url: https://gitlab.com
-
 # User under which jobs will ran (default to "gitlab-runner")
 gitlab_runner_user: gitlab-runner
 gitlab_runner_working_dir: "/home/{{ gitlab_runner_user }}"
+
+# Do we want to support docker/podman containers ?
+# Important for runners_list below (if we want to support other than shells)
+gitlab_runner_podman_host: False
+
+
+# Some setting to register the runner[s]
+# token to be found at the gitlab side for the project/namespace
+# Let's start with a list of runners for podman/docker
+# Example
+# gitlab_runners_podman_list:
+#   - name: podman1
+#     url: https://gitlab.com
+#     registration_token: blablablabla
+#     docker_image: 'alpine:latest'
+#     tag_list: 'tag1,tag2,tag3'   # If we don't specify tag_list, it will be registered with --run-untagged by default
+#   - name: podman2
+#     url: https://gitlab.com
+#     registration_token: blablablabla2
+#     docker_image: 'alpine:latest'
+#     
+gitlab_runners_podman_list: []
+
+# Now same thing but if we just want to use shell (no container)
+# Example:
+# gitlab_runners_shell_list:
+#   - name: shell1
+#     url: https://gitlab.com
+#     registration_token: blablabla
+#     shell: bash
+gitlab_runners_shell_list: []

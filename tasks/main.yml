@@ -34,28 +34,72 @@
   notify: restart_gitlab_runner
 
 - name: Reloading systemd if needed
-  command: systemctl daemon-reload
+  systemd: 
+    daemon_reload: True
   when: systemd_unit is changed
 
-- name: Registering gitlab runner if needed
-  command:
+- block:
+    - import_role:
+        name: podman-host
+      vars:
+        - podman_rootless_users:
+          - "{{ gitlab_runner_user }}"
+        - podman_rootless: True  
+
+    - name: Ensuring that podman.socket is started for users
+      systemd: 
+        scope: user
+        enabled: True
+        name: podman.socket
+        state: started
+      become_user: "{{ gitlab_runner_user }}"
+  when: gitlab_runner_podman_host
+
+- name: Retrieving gitlab runner user id
+  shell: "id -u {{ gitlab_runner_user }}"
+  register: uid
+  tags:
+    - always
+
+- name: Registering podman runners if needed
+  shell:
     cmd: "gitlab-runner register
           --non-interactive
-          --name {{ inventory_hostname }}
-          --url {{ gitlab_runner_upstream_url }} 
-          --registration-token {{ gitlab_runner_registration_token }}
+          --name {{ item.name }}
+          --url {{ item.url }}
+          --executor docker
+          --docker-image '{{ item.docker_image }}'
+          --docker-host 'unix:///run/user/{{ uid.stdout }}/podman/podman.sock'
+          --docker-privileged
+          --registration-token {{ item.registration_token }}
+          {% if item.tag_list is defined %}--tag-list '{{ item.tag_list }}'{% endif %}
+          && touch /etc/gitlab-runner/{{ item.name }}.registered
+         "
+    creates: "/etc/gitlab-runner/{{ item.name }}.registered"
+  with_items: "{{ gitlab_runners_podman_list }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags:
+    - runners
+
+- name: Registering shell runners if needed
+  shell:
+    cmd: "gitlab-runner register
+          --non-interactive
+          --name {{ item.name }}
+          --url {{ item.url }}
           --executor shell
-          --shell bash
-          "
-    creates: /etc/gitlab-runner/registered
-  register: gitlab_registered
+          --shell {{ item.shell }}
+          --registration-token {{ item.registration_token }}
+          {% if item.tag_list is defined %}--tag-list '{{ item.tag_list }}'{% endif %}
+          && touch /etc/gitlab-runner/{{ item.name }}.registered
+         "
+    creates: "/etc/gitlab-runner/{{ item.name }}.registered"
+  with_items: "{{ gitlab_runners_shell_list }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags:
+    - runners
 
-- name: Declaring runner as registered
-  file:
-    path: /etc/gitlab-runner/registered
-    state: touch
-  when:
-    - gitlab_registered is defined
-    - gitlab_registered is changed
 
-
+    

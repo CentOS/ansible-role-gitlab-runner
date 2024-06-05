@@ -53,6 +53,16 @@
         name: podman.socket
         state: started
       become_user: "{{ gitlab_runner_user }}"
+    
+    - name: Ensuring podman cache clean-up on regular basis
+      cron:
+        name: podman images clean-up
+        job: "/usr/bin/podman system prune -a --force >/dev/null 2>&1"
+        hour: "1"
+        minute: "5"
+      become_user: "{{ gitlab_runner_user }}"
+      tags:
+        - cron
   when: gitlab_runner_podman_host
 
 - name: Retrieving gitlab runner user id

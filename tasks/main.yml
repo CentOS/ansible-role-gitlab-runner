@@ -64,19 +64,19 @@
       tags:
         - cron
 
-     - name: Distributing custom selinux policies
-       copy:
-         src: "selinux/{{ ansible_distribution_major_version }}/centos-gitlab-runner.pp"
-         dest: "/etc/selinux/centos/centos-gitlab-runner.pp"
-       register: sepolicy
-       when:
-         - ansible_selinux.status == 'enabled'
+    - name: Distributing custom selinux policies
+      copy:
+        src: "selinux/{{ ansible_distribution_major_version }}/centos-gitlab-runner.pp"
+        dest: "/etc/selinux/centos/centos-gitlab-runner.pp"
+      register: sepolicy
+      when:
+        - ansible_selinux.status == 'enabled'
 
-     - name: reload custom selinux files
-       shell: /usr/sbin/semodule -u "/etc/selinux/centos/centos-gitlab-runner.pp"
-       when:
-         - ansible_selinux.status == "enabled"
-         - sepolicy is changed
+    - name: reload custom selinux files
+      shell: /usr/sbin/semodule -u "/etc/selinux/centos/centos-gitlab-runner.pp"
+      when:
+        - ansible_selinux.status == "enabled"
+        - sepolicy is changed
   when: gitlab_runner_podman_host
 
 - name: Retrieving gitlab runner user id

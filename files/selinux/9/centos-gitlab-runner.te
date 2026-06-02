@@ -1,0 +1,11 @@
+
+module centos-gitlab-runner 1.0;
+
+require {
+	type pasta_t;
+	type container_var_run_t;
+	class dir read;
+}
+
+#============= pasta_t ==============
+allow pasta_t container_var_run_t:dir read;
